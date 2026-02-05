@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import TheoryAcidBasePage from './overview/TheoryAcidBase';
-import LearningOutcomesPage from './overview/LearningOutcomes';
+import LearningOutcomesAcidBasePage from './overview/LearningOutcomesAcidBase';
 import ApparatusPage from './overview/Apparatus';
 
 const labName = 'Identifying Acids and Bases Using Indicators';
@@ -11,12 +11,12 @@ const sectionDescription = ""
 // Subsection config
 const SUBSECTIONS = [
   { id: 'theory', label: 'Theory', icon: '📘', Component: TheoryAcidBasePage },
-  { id: 'outcomes', label: 'Learning Outcomes', icon: '🎯', Component: LearningOutcomesPage },
+  { id: 'outcomes', label: 'Learning Outcomes', icon: '🎯', Component: LearningOutcomesAcidBasePage },
   { id: 'apparatus', label: 'Apparatus', icon: '⚙️', Component: ApparatusPage },
 ];
 
 //Main
-export default function OverviewAcidBase({ markComplete, navigationButtons }) {
+export default function Overview({ markComplete, navigationButtons }) {
   const [activeTab, setActiveTab] = useState(0);
   const isLastTab = activeTab === SUBSECTIONS.length - 1;
 
