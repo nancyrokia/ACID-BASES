@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import OsmosisLab from './labs/OsmosisLab';
-
-function AcidBaseLab() {
-  return <h2>⚗️ Acid–Base Lab (Coming Soon)</h2>;
-}
+import AcidBaseLab from './labs/AcidBaseLab';
+// function AcidBaseLab() {
+//   return <h2>⚗️ Acid–Base Lab (Coming Soon)</h2>;
+// }
 
 export default function App() {
   return (
