@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import PreTest from '../components/PreTest';
-import PostTest from '../components/PostTest';
+import PreTest from '../components/PreTestAcidBase';
+import PostTest from '../components/PostTestAcidBase';
 import OverviewAcidBase from '../components/OverviewAcidBase';
-import PotatoExperiment from '../components/PotatoExperiment';
-import RealWorldApplications from '../components/RealWorldApplications'
+import AcidBaseExperiment from '../components/AcidBaseExperiment';
+import RealWorldApplications from '../components/RealWorldApplicationsAcidBase'
 import NavigationButtons from '../components/common/NavigationButtons';
 import TopBar from '../components/common/navbar';
 
@@ -24,7 +24,7 @@ const sections = [
   {
     id: 'experiment',
     name: 'Simulation',
-    component: PotatoExperiment,
+    component: AcidBaseExperiment,
     icon: '🧪',
   },
   {

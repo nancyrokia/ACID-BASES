@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import TheoryAcidBasePage from './overview/TheoryAcidBase';
 import LearningOutcomesAcidBasePage from './overview/LearningOutcomesAcidBase';
-import ApparatusPage from './overview/Apparatus';
+import ApparatusAcidBaasePage from './overview/ApparatusAcidBase';
 
 const labName = 'Identifying Acids and Bases Using Indicators';
 
@@ -12,7 +12,7 @@ const sectionDescription = ""
 const SUBSECTIONS = [
   { id: 'theory', label: 'Theory', icon: '📘', Component: TheoryAcidBasePage },
   { id: 'outcomes', label: 'Learning Outcomes', icon: '🎯', Component: LearningOutcomesAcidBasePage },
-  { id: 'apparatus', label: 'Apparatus', icon: '⚙️', Component: ApparatusPage },
+  { id: 'apparatus', label: 'Apparatus', icon: '⚙️', Component: ApparatusAcidBaasePage },
 ];
 
 //Main
