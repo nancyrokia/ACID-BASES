@@ -651,9 +651,6 @@ background: `
               {rackTubes.map((v, i) => (
                 <div
                   key={i}
-                  draggable={v === true}
-                  onDragStart={e => v === true && handleDragStart(e, { type: 'tube', index: i })}
-                  onDragEnd={handleDragEnd}
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -665,17 +662,22 @@ background: `
                   }}
                 >
                   {/* Test tube */}
-                  <div style={{
-                    width: '20px',
-                    height: '115px',
-                    marginTop: '15px',
-                    background: v === 'ghost'
-                      ? 'rgba(200,200,200,0.3)'
-                      : 'linear-gradient(90deg, rgba(200,220,230,0.6), rgba(255,255,255,0.9), rgba(200,220,230,0.6))',
-                    borderRadius: '4px 4px 10px 10px',
-                    border: v === 'ghost' ? '1px dashed #aaa' : '1.5px solid rgba(100,150,180,0.4)',
-                    boxShadow: v !== 'ghost' ? 'inset 0 0 8px rgba(255,255,255,0.5)' : 'none',
-                    position: 'relative',
+                  <div 
+                      draggable={v === true}
+                      onDragStart={e => v === true && handleDragStart(e, { type: 'tube', index: i })}
+                      onDragEnd={handleDragEnd}
+                  style={{
+      width: '20px',
+      height: '115px',
+      marginTop: '15px',
+      background: 'linear-gradient(90deg, rgba(200,220,230,0.6), rgba(255,255,255,0.9), rgba(200,220,230,0.6))',
+      borderRadius: '4px 4px 10px 10px',
+      border: '1.5px solid rgba(100,150,180,0.4)',
+      boxShadow: 'inset 0 0 8px rgba(255,255,255,0.5)',
+      position: 'relative',
+      cursor: 'grab',
+      opacity: 1, // always fully visible
+      transition: 'all 0.3s',
                   }}>
                     {/* Tube rim */}
                     {v !== 'ghost' && (
@@ -1238,6 +1240,7 @@ style={{
               justifyContent: 'center',
               alignItems: 'center',
               gap: '42px'
+              
             }}>
               {[0, 1, 2, 3].map(i => (
                 <div key={i} style={{
@@ -1520,7 +1523,7 @@ style={{
     left: -32,
     right: -32,
     height: 42, // slightly taller to fit holes nicely
-    background:'linear-gradient(145deg, #0a1f3a 0%, #1a2b4e 20%, #0f2340 40%, #17305a 60%, #0a1f3a 80%, #1b2c4f 100%)',
+    background:'transparent',
     boxShadow:'inset 0 4px 12px rgba(255,255,255,0.3), inset 0 -4px 12px rgba(0,0,0,0.6), 0 4px 10px rgba(0,0,0,0.4)',
     borderRadius: '0 0 6px 6px',
     display: 'flex',
