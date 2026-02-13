@@ -677,9 +677,6 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
               {rackTubes.map((v, i) => (
                 <div
                   key={i}
-                  draggable={v === true}
-                  onDragStart={e => v === true && handleDragStart(e, { type: 'tube', index: i })}
-                  onDragEnd={handleDragEnd}
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -691,17 +688,22 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
                   }}
                 >
                   {/* Test tube */}
-                  <div style={{
-                    width: '20px',
-                    height: '115px',
-                    marginTop: '15px',
-                    background: v === 'ghost'
-                      ? 'rgba(200,200,200,0.3)'
-                      : 'linear-gradient(90deg, rgba(200,220,230,0.6), rgba(255,255,255,0.9), rgba(200,220,230,0.6))',
-                    borderRadius: '4px 4px 10px 10px',
-                    border: v === 'ghost' ? '1px dashed #aaa' : '1.5px solid rgba(100,150,180,0.4)',
-                    boxShadow: v !== 'ghost' ? 'inset 0 0 8px rgba(255,255,255,0.5)' : 'none',
-                    position: 'relative',
+                  <div 
+                      draggable={v === true}
+                      onDragStart={e => v === true && handleDragStart(e, { type: 'tube', index: i })}
+                      onDragEnd={handleDragEnd}
+                  style={{
+      width: '20px',
+      height: '115px',
+      marginTop: '15px',
+      background: 'linear-gradient(90deg, rgba(200,220,230,0.6), rgba(255,255,255,0.9), rgba(200,220,230,0.6))',
+      borderRadius: '4px 4px 10px 10px',
+      border: '1.5px solid rgba(100,150,180,0.4)',
+      boxShadow: 'inset 0 0 8px rgba(255,255,255,0.5)',
+      position: 'relative',
+      cursor: 'grab',
+      opacity: 1, // always fully visible
+      transition: 'all 0.3s',
                   }}>
                     {/* Tube rim */}
                     {v !== 'ghost' && (
@@ -1263,6 +1265,7 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
               justifyContent: 'center',
               alignItems: 'center',
               gap: '42px'
+              
             }}>
               {[0, 1, 2, 3].map(i => (
                 <div key={i} style={{
@@ -1575,6 +1578,7 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
               })}
             </div>
 
+<<<<<<< HEAD
             {/* Rack Bottom Base */}
             <div
               style={{
@@ -1605,6 +1609,60 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
                   }}
                 />
               ))}
+=======
+              {/* Rack Bottom Base */}
+<div
+  style={{
+    position: 'absolute',
+    bottom: 0,
+    left: -32,
+    right: -32,
+    height: 42, // slightly taller to fit holes nicely
+    background:'transparent',
+    boxShadow:'inset 0 4px 12px rgba(255,255,255,0.3), inset 0 -4px 12px rgba(0,0,0,0.6), 0 4px 10px rgba(0,0,0,0.4)',
+    borderRadius: '0 0 6px 6px',
+    display: 'flex',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    padding: '0 40px',
+  }}
+>
+  {[0, 1, 2, 3].map((_, i) => (
+    <div
+      key={i}
+      style={{
+        width: 38,
+        height: 14,
+        borderRadius: '50%',
+        background: `radial-gradient( circle at 30% 30%, #f5f5f5 0%, #d6d6d6 25%, #a8a8a8 45%, #7a7a7a 65%, #4f4f4f 85%, #2f2f2f 100%)`,
+        boxShadow: `inset 0 6px 12px rgba(0,0,0,0.8),inset 0 -2px 4px rgba(255,255,255,0.3),0 2px 6px rgba(0,0,0,0.4)`,
+        border: '1px solid rgba(255,255,255,0.25)',
+      }}
+    />
+  ))}
+</div>
+</div>
+
+          {/* Pouring animation */}
+          {pouring && pouringTubeIndex !== null && (
+            <div style={{
+              position: 'absolute',
+              top: '5%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}>
+              <div style={{
+                width: '8px',
+                height: '80px',
+                background: SOLUTION_DATA[selectedSolution]?.color || '#e0f2fe',
+                borderRadius: '4px',
+                animation: 'stream 0.3s ease-in-out infinite',
+                boxShadow: '0 0 8px rgba(66,153,225,0.4)',
+              }} />
+>>>>>>> 809e281684b1eafb1b33dcea12a9bdbefd5529fb
             </div>
           </div>
 
