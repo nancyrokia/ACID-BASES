@@ -54,6 +54,7 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
   const [selectedSolution, setSelectedSolution] = useState('');
   const [pouring, setPouring] = useState(false);
   const [pouringTubeIndex, setPouringTubeIndex] = useState(null);
+  const [pourTargetPos, setPourTargetPos] = useState(null);
 
   // ── observation state ──
   const [activeLitmusId, setActiveLitmusId] = useState(null);
@@ -67,24 +68,26 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
   // ── drag-and-drop state ──
   const [dragging, setDragging] = useState(null);
   const [dropping, setDropping] = useState(false);
+  const [flaskDragPosition, setFlaskDragPosition] = useState(null);
 
   // ── refs ──
   const benchRef = useRef(null);
+  const pourIntervalRef = useRef(null);
 
   // ── derived ──
   const isStepComplete = (stepIndex) => experimentStep > stepIndex;
   const isStepActive = (stepIndex) => experimentStep === stepIndex;
 
   // ── Trash can state ──
-const [trashHover, setTrashHover] = useState(false); // lid open hover
-const [disposedLitmus, setDisposedLitmus] = useState([]); // list of used litmus disposed
+  const [trashHover, setTrashHover] = useState(false); // lid open hover
+  const [disposedLitmus, setDisposedLitmus] = useState([]); // list of used litmus disposed
 
-  
+
   // Get tubes that have been placed on bench
   const placedTubes = benchTubes.filter(t => t !== null);
   const hasAnyTubeWithSolution = placedTubes.some(t => t?.solution);
   const hasAnyTubeWithLitmus = placedTubes.some(t => t?.litmus?.length > 0);
-  
+
   // Get first tube with solution for observation
   const tubeWithSolution = benchTubes.find(t => t?.solution);
   const actualResult = tubeWithSolution?.solution?.type || '';
@@ -121,12 +124,20 @@ const [disposedLitmus, setDisposedLitmus] = useState([]); // list of used litmus
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', JSON.stringify(item));
     setDragging(item);
+
+    if (item.type === 'flask') {
+      // Create a transparent drag image to hide the native ghost
+      const img = new Image();
+      img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+      e.dataTransfer.setDragImage(img, 0, 0);
+    }
   };
 
   const handleDragEnd = () => {
     setDragging(null);
     setDropping(false);
-    setPouring(false);
+    setFlaskDragPosition(null);
+    // Don't stopPour here, let it finish once we release it on the tube
   };
 
   const handleDragOver = (e) => {
@@ -164,46 +175,61 @@ const [disposedLitmus, setDisposedLitmus] = useState([]); // list of used litmus
     setDropping(false);
   };
 
-  // ── pour solution into tube ──
-  const startPour = (tubeIndex) => {
+  // ── stop pouring ──
+  const stopPour = () => {
+    if (pourIntervalRef.current) {
+      clearInterval(pourIntervalRef.current);
+      pourIntervalRef.current = null;
+    }
+    setPouring(false);
+    setPouringTubeIndex(null);
+    setPourTargetPos(null);
+  };
+
+  // ── pour solution into tube (proximity-based) ──
+  const startPour = (tubeIndex, targetPos = null) => {
     if (!selectedSolution) return;
     if (!benchTubes[tubeIndex] || benchTubes[tubeIndex].solution) return;
 
+    // Don't restart if already pouring into THIS tube
+    if (pouring && pouringTubeIndex === tubeIndex) return;
+
+    // If pouring into a DIFFERENT tube, stop that one first
+    if (pourIntervalRef.current) {
+      stopPour();
+    }
+
     setPouring(true);
     setPouringTubeIndex(tubeIndex);
-    let fill = 0;
+    if (targetPos) setPourTargetPos(targetPos);
 
-    const interval = setInterval(() => {
-      fill += 5;
+    pourIntervalRef.current = setInterval(() => {
       setBenchTubes(t => {
         const copy = [...t];
-        if (copy[tubeIndex]) {
-          copy[tubeIndex] = { ...copy[tubeIndex], fill };
+        const currentTube = copy[tubeIndex];
+
+        if (!currentTube) return t;
+
+        const newFill = (currentTube.fill || 0) + 5;
+
+        // Update fill level
+        copy[tubeIndex] = { ...currentTube, fill: newFill };
+
+        // Complete when full
+        if (newFill >= 70) {
+          stopPour();
+          copy[tubeIndex] = {
+            ...copy[tubeIndex],
+            solution: SOLUTION_DATA[selectedSolution]
+          };
+
+          // Complete step 1 on first solution pour
+          if (experimentStep === 1) {
+            completeStep(1);
+          }
         }
         return copy;
       });
-
-      if (fill >= 70) {
-        clearInterval(interval);
-        setPouring(false);
-        setPouringTubeIndex(null);
-
-        setBenchTubes(t => {
-          const copy = [...t];
-          if (copy[tubeIndex]) {
-            copy[tubeIndex] = {
-              ...copy[tubeIndex],
-              solution: SOLUTION_DATA[selectedSolution]
-            };
-          }
-          return copy;
-        });
-
-        // Complete step 1 on first solution pour
-        if (experimentStep === 1) {
-          completeStep(1);
-        }
-      }
     }, 80);
   };
 
@@ -268,7 +294,7 @@ const [disposedLitmus, setDisposedLitmus] = useState([]); // list of used litmus
     setActiveLitmusId(litmusId);
     setObservationText(text);
     setSelectedTubeForObservation(tubeIndex);
-    
+
     // Complete step 3 on first observation
     if (experimentStep === 3) {
       completeStep(3);
@@ -333,18 +359,18 @@ const [disposedLitmus, setDisposedLitmus] = useState([]); // list of used litmus
       <div style={{
         height: 10,
         width: '100%',
-background: `
+        background: `
   linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 30%),
   linear-gradient(160deg, #0b1e3a 0%, #132a52 25%, #1c3f75 50%, #132a52 75%, #0b1e3a 100%)
 `,
 
-        
+
         borderRadius: '4px 4px 0 0',
       }} />
       <div style={{
         height: 10,
         width: '100%',
-background: `
+        background: `
   linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 30%),
   linear-gradient(160deg, #0b1e3a 0%, #132a52 25%, #1c3f75 50%, #132a52 75%, #0b1e3a 100%)
 `,
@@ -570,7 +596,7 @@ background: `
           <p style={{ fontSize: '0.75rem', color: '#4a5568', fontWeight: 600, margin: '0 0 8px' }}>
             Test Tube Rack
           </p>
-          
+
           {/* Rack Structure */}
           <div style={{
             position: 'relative',
@@ -589,7 +615,7 @@ background: `
               border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: '3px 0 0 3px',
             }} />
-            
+
             {/* Rack Right Support */}
             <div style={{
               position: 'absolute',
@@ -611,7 +637,7 @@ background: `
               left: 8,
               right: 8,
               height: 27,
-              marginTop:70,
+              marginTop: 70,
               background: `linear-gradient(160deg, #0b1e3a 0%,#132a52 20%, #1c3f75 35%, #2a5aa3 45%, #1c3f75 55%, #132a52 70%, #0b1e3a 100%)`,
               boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
               border: '1px solid rgba(255,255,255,0.2)',
@@ -779,44 +805,43 @@ background: `
           <div
             draggable={!!selectedSolution && placedTubes.length > 0}
             onDragStart={e => {
-  if (selectedSolution && placedTubes.length > 0) {
-    handleDragStart(e, { type: 'flask' });
+              if (selectedSolution && placedTubes.length > 0) {
+                handleDragStart(e, { type: 'flask' });
 
-    // create floating flask clone
-    const rect = e.currentTarget.getBoundingClientRect();
-    setFlaskDragPosition({
-      x: rect.left,
-      y: rect.top
-    });
-  }
-}}
+                // create floating flask clone
+                const rect = e.currentTarget.getBoundingClientRect();
+                setFlaskDragPosition({
+                  x: rect.left,
+                  y: rect.top
+                });
+              }
+            }}
 
-onDrag={(e) => {
-  if (flaskDragPosition) {
-    setFlaskDragPosition({
-      x: e.clientX - 35,
-      y: e.clientY - 35
-    });
-  }
-}}
+            onDrag={(e) => {
+              // Browser drag events often send 0,0 on last frame or intermediate frames
+              if (e.clientX !== 0 && e.clientY !== 0 && flaskDragPosition) {
+                setFlaskDragPosition({
+                  x: e.clientX,
+                  y: e.clientY
+                });
+              }
+            }}
 
-onDragEnd={() => {
-  handleDragEnd();
-  setFlaskDragPosition(null);
-}}
+            onDragEnd={() => {
+              handleDragEnd();
+              setFlaskDragPosition(null);
+            }}
 
-style={{
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  cursor: selectedSolution && placedTubes.length > 0 ? 'grab' : 'not-allowed',
-  opacity: selectedSolution && placedTubes.length > 0 ? 1 : 0.5,
-  transition: 'transform 0.4s ease',
-  transform: pouring
-    ? 'translateX(40px) translateY(20px) rotate(-35deg)'
-    : 'translateX(0px) translateY(0px) rotate(0deg)',
-  transformOrigin: 'top center',
-}}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: selectedSolution && placedTubes.length > 0 ? 'grab' : 'not-allowed',
+              opacity: selectedSolution && placedTubes.length > 0 ? 1 : 0.5,
+              transition: 'transform 0.4s ease',
+              transform: 'translateX(0px) translateY(0px) rotate(0deg)',
+              transformOrigin: 'top center',
+            }}
 
           >
             {/* Flask neck */}
@@ -857,53 +882,53 @@ style={{
             {placedTubes.length > 0 ? 'Drag to pour into tube' : 'Place tube first'}
           </span>
         </div>
-{/* Pour stream */}
-{pouring && (
-  <div style={{
-    position: 'absolute',
-    bottom: '-40px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    width: '8px',
-    height: '50px',
-    background: SOLUTION_DATA[selectedSolution]?.color || '#e0f2fe',
-    borderRadius: '4px',
-    opacity: 0.8,
-    animation: 'pourFlow 0.4s infinite alternate',
-  }} />
-)}
+        {/* Pour stream */}
+        {pouring && (
+          <div style={{
+            position: 'absolute',
+            bottom: '-40px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '8px',
+            height: '50px',
+            background: SOLUTION_DATA[selectedSolution]?.color || '#e0f2fe',
+            borderRadius: '4px',
+            opacity: 0.8,
+            animation: 'pourFlow 0.4s infinite alternate',
+          }} />
+        )}
 
-    {/* Flask neck */}
-    <div style={{
-      width: '16px',
-      height: '25px',
-      background: 'linear-gradient(90deg, rgba(200,220,230,0.8), rgba(255,255,255,0.9), rgba(200,220,230,0.8))',
-      borderRadius: '3px 3px 0 0',
-      border: '2px solid rgba(100,150,180,0.4)',
-      borderBottom: 'none',
-      margin: '0 auto'
-    }} />
-    {/* Flask body */}
-    <div style={{
-      width: '70px',
-      height: '70px',
-      background: 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(200,220,230,0.6) 100%)',
-      borderRadius: '50%',
-      border: '2px solid rgba(100,150,180,0.4)',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      <div style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: '60%',
-        background: SOLUTION_DATA[selectedSolution]?.color || '#e0f2fe',
-        borderRadius: '0 0 50% 50%',
-      }} />
-    </div>
-  
+        {/* Flask neck */}
+        <div style={{
+          width: '16px',
+          height: '25px',
+          background: 'linear-gradient(90deg, rgba(200,220,230,0.8), rgba(255,255,255,0.9), rgba(200,220,230,0.8))',
+          borderRadius: '3px 3px 0 0',
+          border: '2px solid rgba(100,150,180,0.4)',
+          borderBottom: 'none',
+          margin: '0 auto'
+        }} />
+        {/* Flask body */}
+        <div style={{
+          width: '70px',
+          height: '70px',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(200,220,230,0.6) 100%)',
+          borderRadius: '50%',
+          border: '2px solid rgba(100,150,180,0.4)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '60%',
+            background: SOLUTION_DATA[selectedSolution]?.color || '#e0f2fe',
+            borderRadius: '0 0 50% 50%',
+          }} />
+        </div>
+
 
         <WoodenShelf />
 
@@ -1106,31 +1131,31 @@ style={{
           transform: 'translateY(-180px)', // 👈 MOVE UP (adjust this value)
         }}>
 
-{/* Lower Table Layer */}
-<div style={{
-  position: 'absolute',
-  bottom: 20, // slightly lower than upper table
-  left: 0,
-  right: 0,
-  height: TABLE_H,
-  background: 'linear-gradient(160deg, #081730 0%, #0b1e3a 100%)',
-  borderRadius: '0 0 6px 6px',
-  zIndex: 0,
-}} />
+          {/* Lower Table Layer */}
+          <div style={{
+            position: 'absolute',
+            bottom: 20, // slightly lower than upper table
+            left: 0,
+            right: 0,
+            height: TABLE_H,
+            background: 'linear-gradient(160deg, #081730 0%, #0b1e3a 100%)',
+            borderRadius: '0 0 6px 6px',
+            zIndex: 0,
+          }} />
 
-{/* Upper Table Layer (existing) */}
-<div style={{
-  position: 'absolute',
-  bottom: 40, // raise this higher than lower layer
-  left: 0,
-  right: 0,
-  height: TABLE_H,
-  background: `linear-gradient(160deg, #0b1e3a 0%,#132a52 20%, #1c3f75 35%, #2a5aa3 45%, #1c3f75 55%, #132a52 70%, #0b1e3a 100%)`,
-  boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
-  border: '1px solid rgba(255,255,255,0.2)',
-  borderRadius: '0 0 6px 6px',
-  zIndex: 2,
-}} />
+          {/* Upper Table Layer (existing) */}
+          <div style={{
+            position: 'absolute',
+            bottom: 40, // raise this higher than lower layer
+            left: 0,
+            right: 0,
+            height: TABLE_H,
+            background: `linear-gradient(160deg, #0b1e3a 0%,#132a52 20%, #1c3f75 35%, #2a5aa3 45%, #1c3f75 55%, #132a52 70%, #0b1e3a 100%)`,
+            boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '0 0 6px 6px',
+            zIndex: 2,
+          }} />
 
 
 
@@ -1145,7 +1170,7 @@ style={{
             boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
             border: '1px solid rgba(255,255,255,0.2)',
             borderRadius: '0 0 6px 6px',
-            
+
           }}>
             {[5, 12, 20, 30, 40, 50, 60, 70, 80, 88, 95].map((p) => (
               <div key={p} style={{
@@ -1161,40 +1186,40 @@ style={{
 
 
 
-          
-
-         {/* Table Legs */}
-{[0, 1].map((side) => (
-  <div
-    key={side}
-    style={{
-      position: 'absolute',
-      bottom: -200, // how long legs go down
-      left: side === 0 ? 40 : TABLE_W - 60,
-      width: 28,
-      height: 200,
-      background:
-        'linear-gradient(160deg, #0a1f3a 0%, #132a52 30%, #1c3f75 60%, #0a1f3a 100%)',
-      boxShadow:
-        'inset 0 4px 10px rgba(255,255,255,0.25), inset 0 -6px 14px rgba(0,0,0,0.6), 0 6px 14px rgba(0,0,0,0.4)',
-      borderRadius: '4px',
-    }}
-  />
-))}
 
 
+          {/* Table Legs */}
+          {[0, 1].map((side) => (
+            <div
+              key={side}
+              style={{
+                position: 'absolute',
+                bottom: -200, // how long legs go down
+                left: side === 0 ? 40 : TABLE_W - 60,
+                width: 28,
+                height: 200,
+                background:
+                  'linear-gradient(160deg, #0a1f3a 0%, #132a52 30%, #1c3f75 60%, #0a1f3a 100%)',
+                boxShadow:
+                  'inset 0 4px 10px rgba(255,255,255,0.25), inset 0 -6px 14px rgba(0,0,0,0.6), 0 6px 14px rgba(0,0,0,0.4)',
+                borderRadius: '4px',
+              }}
+            />
+          ))}
 
-{/* Test Tube Rack on Bench */}
-<div style={{
-  position: 'absolute',
-  bottom: TABLE_H + 30, // 40px higher than before
-  left: '50%',
-  transform: 'translateX(-50%)',
-  width: RACK_WIDTH,
-  height: RACK_HEIGHT,
-}}>
 
-            
+
+          {/* Test Tube Rack on Bench */}
+          <div style={{
+            position: 'absolute',
+            bottom: TABLE_H + 30, // 40px higher than before
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: RACK_WIDTH,
+            height: RACK_HEIGHT,
+          }}>
+
+
             {/* Rack Left Support */}
             <div style={{
               position: 'absolute',
@@ -1206,7 +1231,7 @@ style={{
               boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
               border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: '4px 0 0 4px',
-              
+
             }} />
 
             {/* Rack Right Support */}
@@ -1220,7 +1245,7 @@ style={{
               boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
               border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: '0 4px 4px 0',
-              
+
             }} />
 
             {/* Rack Top Bar with Holes */}
@@ -1278,7 +1303,7 @@ style={{
                       width: '42px',
                       height: '300px',
                       position: 'relative',
-                      marginTop:'-80px',
+                      marginTop: '-80px',
                     }}
                     onDragOver={(e) => {
                       e.preventDefault();
@@ -1286,14 +1311,17 @@ style={{
                         setDropping(true);
                       }
                     }}
-                    onDragLeave={() => setDropping(false)}
+                    onDragLeave={() => {
+                      setDropping(false);
+                      // Only stop pour if we are NOT on the rim anymore
+                    }}
                     onDrop={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       if (dragging?.type === 'tube') {
                         handleDropOnBenchSlot(slotIndex);
                       } else if (dragging?.type === 'flask' && tube && !tube.solution) {
-                        startPour(slotIndex);
+                        // Pouring already handled by rim trigger
                         setDragging(null);
                       } else if (dragging?.type === 'litmus' && tube?.solution) {
                         insertLitmus(slotIndex, dragging.color);
@@ -1301,6 +1329,41 @@ style={{
                       }
                     }}
                   >
+                    {tube && (
+                      <div
+                        data-name="rim-trigger"
+                        style={{
+                          position: 'absolute',
+                          top: '-20px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          width: '50px',
+                          height: '100px',
+                          background: 'transparent', // invisible trigger
+                          zIndex: 20,
+                          cursor: 'pointer',
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (dragging?.type === 'flask' && !tube.solution) {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            startPour(slotIndex, {
+                              x: rect.left + rect.width / 2,
+                              y: rect.top + rect.height / 2
+                            });
+                          }
+                        }}
+                        onDragLeave={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (dragging?.type === 'flask') {
+                            stopPour();
+                          }
+                        }}
+                      />
+                    )}
+
                     {tube ? (
                       <>
                         {/* Tube Label */}
@@ -1347,9 +1410,9 @@ style={{
                         <div style={{
                           width: '100%',
                           height: '89%',
-                          
+
                           background: 'linear-gradient(90deg, rgba(200,220,230,0.4), rgba(255,255,255,0.85), rgba(200,220,230,0.4))',
-                          
+
                           borderRadius: '4px 4px 10px 10px',
 
 
@@ -1512,61 +1575,42 @@ style={{
               })}
             </div>
 
-              {/* Rack Bottom Base */}
-<div
-  style={{
-    position: 'absolute',
-    bottom: 0,
-    left: -32,
-    right: -32,
-    height: 42, // slightly taller to fit holes nicely
-    background:'linear-gradient(145deg, #0a1f3a 0%, #1a2b4e 20%, #0f2340 40%, #17305a 60%, #0a1f3a 80%, #1b2c4f 100%)',
-    boxShadow:'inset 0 4px 12px rgba(255,255,255,0.3), inset 0 -4px 12px rgba(0,0,0,0.6), 0 4px 10px rgba(0,0,0,0.4)',
-    borderRadius: '0 0 6px 6px',
-    display: 'flex',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    padding: '0 40px',
-  }}
->
-  {[0, 1, 2, 3].map((_, i) => (
-    <div
-      key={i}
-      style={{
-        width: 38,
-        height: 14,
-        borderRadius: '50%',
-        background: `radial-gradient( circle at 30% 30%, #f5f5f5 0%, #d6d6d6 25%, #a8a8a8 45%, #7a7a7a 65%, #4f4f4f 85%, #2f2f2f 100%)`,
-        boxShadow: `inset 0 6px 12px rgba(0,0,0,0.8),inset 0 -2px 4px rgba(255,255,255,0.3),0 2px 6px rgba(0,0,0,0.4)`,
-        border: '1px solid rgba(255,255,255,0.25)',
-      }}
-    />
-  ))}
-</div>
-</div>
-
-          {/* Pouring animation */}
-          {pouring && pouringTubeIndex !== null && (
-            <div style={{
-              position: 'absolute',
-              top: '5%',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}>
-              <div style={{
-                width: '8px',
-                height: '80px',
-                background: SOLUTION_DATA[selectedSolution]?.color || '#e0f2fe',
-                borderRadius: '4px',
-                animation: 'stream 0.3s ease-in-out infinite',
-                boxShadow: '0 0 8px rgba(66,153,225,0.4)',
-              }} />
+            {/* Rack Bottom Base */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: -32,
+                right: -32,
+                height: 42, // slightly taller to fit holes nicely
+                background: 'linear-gradient(145deg, #0a1f3a 0%, #1a2b4e 20%, #0f2340 40%, #17305a 60%, #0a1f3a 80%, #1b2c4f 100%)',
+                boxShadow: 'inset 0 4px 12px rgba(255,255,255,0.3), inset 0 -4px 12px rgba(0,0,0,0.6), 0 4px 10px rgba(0,0,0,0.4)',
+                borderRadius: '0 0 6px 6px',
+                display: 'flex',
+                justifyContent: 'space-around',
+                alignItems: 'center',
+                padding: '0 40px',
+              }}
+            >
+              {[0, 1, 2, 3].map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: 38,
+                    height: 14,
+                    borderRadius: '50%',
+                    background: `radial-gradient( circle at 30% 30%, #f5f5f5 0%, #d6d6d6 25%, #a8a8a8 45%, #7a7a7a 65%, #4f4f4f 85%, #2f2f2f 100%)`,
+                    boxShadow: `inset 0 6px 12px rgba(0,0,0,0.8),inset 0 -2px 4px rgba(255,255,255,0.3),0 2px 6px rgba(0,0,0,0.4)`,
+                    border: '1px solid rgba(255,255,255,0.25)',
+                  }}
+                />
+              ))}
             </div>
-          )}
+          </div>
+
         </div>
+
+
 
 
 
@@ -1756,12 +1800,12 @@ style={{
 
   /* ═══════════════ MAIN RETURN ═══════════════ */
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 6em)', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Main content area */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {renderLeftSidebar()}
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {renderWorkingTable()}
         </div>
 
@@ -1770,6 +1814,83 @@ style={{
 
       {/* Navigation buttons */}
       {navigationButtons}
+
+      {/* Manual Flask Drag Clone */}
+      {flaskDragPosition && (
+        <div style={{
+          position: 'fixed',
+          left: pouring && pourTargetPos ? pourTargetPos.x : flaskDragPosition.x,
+          top: pouring && pourTargetPos ? pourTargetPos.y : flaskDragPosition.y,
+          pointerEvents: 'none',
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          transform: pouring ? 'translate(-10%, -60%)' : 'translate(-50%, -50%)', // Adjusted offset for snap
+          transition: pouring ? 'all 0.3s ease-out' : 'none',
+          filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))'
+        }}>
+          {/* Tilted Flask and Stream Container */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            transform: pouring ? 'rotate(-35deg)' : 'rotate(0deg)',
+            transformOrigin: 'top center',
+            transition: 'transform 0.4s ease'
+          }}>
+            {/* Flask neck */}
+            <div style={{
+              width: '16px',
+              height: '25px',
+              background: 'linear-gradient(90deg, rgba(200,220,230,0.8), rgba(255,255,255,0.9), rgba(200,220,230,0.8))',
+              borderRadius: '3px 3px 0 0',
+              border: '2px solid rgba(100,150,180,0.4)',
+              borderBottom: 'none',
+            }} />
+            {/* Flask body */}
+            <div style={{
+              width: '70px',
+              height: '70px',
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(200,220,230,0.6) 100%)',
+              borderRadius: '50%',
+              border: '2px solid rgba(100,150,180,0.4)',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: 'inset 0 0 20px rgba(255,255,255,0.5)',
+            }}>
+              {selectedSolution && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: '60%',
+                  background: SOLUTION_DATA[selectedSolution]?.color || '#e0f2fe',
+                  borderRadius: '0 0 50% 50%',
+                }} />
+              )}
+            </div>
+
+            {/* Pour stream from this unified flask */}
+            {pouring && (
+              <div className="stream" style={{
+                position: 'absolute',
+                top: '25px',
+                left: '60%',
+                width: '4px',
+                background: SOLUTION_DATA[selectedSolution]?.color || '#e0f2fe',
+                opacity: 0.8,
+                zIndex: 15,
+                boxShadow: '0 0 8px rgba(255,255,255,0.6)',
+              }}>
+                <div className="pour-flow" style={{ background: SOLUTION_DATA[selectedSolution]?.color || '#e0f2fe' }} />
+                <div className="liquid-glow" style={{ background: SOLUTION_DATA[selectedSolution]?.color || '#e0f2fe' }} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

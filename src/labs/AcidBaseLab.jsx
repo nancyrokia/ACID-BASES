@@ -117,7 +117,10 @@ export default function AcidBaseLab() {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        height: '100vh',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
         background: '#f7fafc',
@@ -135,15 +138,13 @@ export default function AcidBaseLab() {
 
       <main style={{
         flex: 1,
-        //  padding: '2rem' 
+        height: '100%',
+        overflow: 'hidden',
       }}>
         <div
           style={{
-            // background: 'white',
-            borderRadius: '12px',
-            // padding: '2rem',
-            // boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            minHeight: '100%',
+            height: '100%',
+            overflow: 'hidden',
           }}
         >
           {renderComponent()}
