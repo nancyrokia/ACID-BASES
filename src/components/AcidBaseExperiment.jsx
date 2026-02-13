@@ -1103,7 +1103,36 @@ style={{
           width: TABLE_W,
           height: RACK_HEIGHT + TABLE_H + 60,
           margin: '0 auto',
+          transform: 'translateY(-180px)', // 👈 MOVE UP (adjust this value)
         }}>
+
+{/* Lower Table Layer */}
+<div style={{
+  position: 'absolute',
+  bottom: 20, // slightly lower than upper table
+  left: 0,
+  right: 0,
+  height: TABLE_H,
+  background: 'linear-gradient(160deg, #081730 0%, #0b1e3a 100%)',
+  borderRadius: '0 0 6px 6px',
+  zIndex: 0,
+}} />
+
+{/* Upper Table Layer (existing) */}
+<div style={{
+  position: 'absolute',
+  bottom: 40, // raise this higher than lower layer
+  left: 0,
+  right: 0,
+  height: TABLE_H,
+  background: `linear-gradient(160deg, #0b1e3a 0%,#132a52 20%, #1c3f75 35%, #2a5aa3 45%, #1c3f75 55%, #132a52 70%, #0b1e3a 100%)`,
+  boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
+  border: '1px solid rgba(255,255,255,0.2)',
+  borderRadius: '0 0 6px 6px',
+  zIndex: 2,
+}} />
+
+
 
           {/* Laboratory Bench (wooden table) */}
           <div style={{
@@ -1130,16 +1159,20 @@ style={{
             ))}
           </div>
 
+
+
+          
+
          {/* Table Legs */}
 {[0, 1].map((side) => (
   <div
     key={side}
     style={{
       position: 'absolute',
-      bottom: -180, // how long legs go down
+      bottom: -200, // how long legs go down
       left: side === 0 ? 40 : TABLE_W - 60,
       width: 28,
-      height: 180,
+      height: 200,
       background:
         'linear-gradient(160deg, #0a1f3a 0%, #132a52 30%, #1c3f75 60%, #0a1f3a 100%)',
       boxShadow:
@@ -1151,15 +1184,16 @@ style={{
 
 
 
-          {/* Test Tube Rack on Bench */}
-          <div style={{
-            position: 'absolute',
-            bottom: TABLE_H,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: RACK_WIDTH,
-            height: RACK_HEIGHT,
-          }}>
+{/* Test Tube Rack on Bench */}
+<div style={{
+  position: 'absolute',
+  bottom: TABLE_H + 30, // 40px higher than before
+  left: '50%',
+  transform: 'translateX(-50%)',
+  width: RACK_WIDTH,
+  height: RACK_HEIGHT,
+}}>
+
             
             {/* Rack Left Support */}
             <div style={{
@@ -1485,11 +1519,9 @@ style={{
     bottom: 0,
     left: -32,
     right: -32,
-    height: 22, // slightly taller to fit holes nicely
-    background:
-      'linear-gradient(145deg, #0a1f3a 0%, #1a2b4e 20%, #0f2340 40%, #17305a 60%, #0a1f3a 80%, #1b2c4f 100%)',
-    boxShadow:
-      'inset 0 4px 12px rgba(255,255,255,0.3), inset 0 -4px 12px rgba(0,0,0,0.6), 0 4px 10px rgba(0,0,0,0.4)',
+    height: 42, // slightly taller to fit holes nicely
+    background:'linear-gradient(145deg, #0a1f3a 0%, #1a2b4e 20%, #0f2340 40%, #17305a 60%, #0a1f3a 80%, #1b2c4f 100%)',
+    boxShadow:'inset 0 4px 12px rgba(255,255,255,0.3), inset 0 -4px 12px rgba(0,0,0,0.6), 0 4px 10px rgba(0,0,0,0.4)',
     borderRadius: '0 0 6px 6px',
     display: 'flex',
     justifyContent: 'space-around',
