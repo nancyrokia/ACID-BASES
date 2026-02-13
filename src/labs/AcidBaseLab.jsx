@@ -23,7 +23,7 @@ const sections = [
   },
   {
     id: 'experiment',
-    name: 'Simulation',
+    name: 'Experiment',
     component: AcidBaseExperiment,
     icon: '🧪',
   },

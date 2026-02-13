@@ -74,6 +74,11 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
   // ── derived ──
   const isStepComplete = (stepIndex) => experimentStep > stepIndex;
   const isStepActive = (stepIndex) => experimentStep === stepIndex;
+
+  // ── Trash can state ──
+const [trashHover, setTrashHover] = useState(false); // lid open hover
+const [disposedLitmus, setDisposedLitmus] = useState([]); // list of used litmus disposed
+
   
   // Get tubes that have been placed on bench
   const placedTubes = benchTubes.filter(t => t !== null);
@@ -328,13 +333,22 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
       <div style={{
         height: 10,
         width: '100%',
-        background: 'linear-gradient(to bottom, #d2b48c, #c4a484)',
+background: `
+  linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 30%),
+  linear-gradient(160deg, #0b1e3a 0%, #132a52 25%, #1c3f75 50%, #132a52 75%, #0b1e3a 100%)
+`,
+
+        
         borderRadius: '4px 4px 0 0',
       }} />
       <div style={{
         height: 10,
         width: '100%',
-        background: 'linear-gradient(180deg, #a8896a 0%, #8b6d4d 100%)',
+background: `
+  linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 30%),
+  linear-gradient(160deg, #0b1e3a 0%, #132a52 25%, #1c3f75 50%, #132a52 75%, #0b1e3a 100%)
+`,
+
         borderRadius: '0 0 4px 4px',
         borderTop: '1px solid rgba(255,255,255,0.1)',
         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
@@ -561,7 +575,7 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
           <div style={{
             position: 'relative',
             width: '200px',
-            height: '120px',
+            height: '170px',
           }}>
             {/* Rack Left Support */}
             <div style={{
@@ -569,8 +583,10 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
               left: 0,
               bottom: 0,
               width: 15,
-              height: 100,
-              background: 'linear-gradient(90deg, #a8896a 0%, #c4a882 50%, #a8896a 100%)',
+              height: 150,
+              background: `linear-gradient(160deg, #0b1e3a 0%,#132a52 20%, #1c3f75 35%, #2a5aa3 45%, #1c3f75 55%, #132a52 70%, #0b1e3a 100%)`,
+              boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
+              border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: '3px 0 0 3px',
             }} />
             
@@ -580,9 +596,12 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
               right: 0,
               bottom: 0,
               width: 15,
-              height: 100,
-              background: 'linear-gradient(90deg, #a8896a 0%, #c4a882 50%, #a8896a 100%)',
+              height: 150,
               borderRadius: '0 3px 3px 0',
+              background: `linear-gradient(160deg, #0b1e3a 0%,#132a52 20%, #1c3f75 35%, #2a5aa3 45%, #1c3f75 55%, #132a52 70%, #0b1e3a 100%)`,
+              boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
+              border: '1px solid rgba(255,255,255,0.2)'
+
             }} />
 
             {/* Rack Top Bar with Holes */}
@@ -591,22 +610,26 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
               top: 0,
               left: 8,
               right: 8,
-              height: 16,
-              background: 'linear-gradient(180deg, #d4b896 0%, #c4a882 100%)',
+              height: 27,
+              marginTop:70,
+              background: `linear-gradient(160deg, #0b1e3a 0%,#132a52 20%, #1c3f75 35%, #2a5aa3 45%, #1c3f75 55%, #132a52 70%, #0b1e3a 100%)`,
+              boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
+              border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: '3px 3px 0 0',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
               gap: '28px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
             }}>
               {[0, 1, 2, 3].map(i => (
                 <div key={i} style={{
                   width: '22px',
                   height: '10px',
-                  background: '#5c4033',
                   borderRadius: '50%',
-                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)',
+                  background: `radial-gradient(circle at 30% 30%,#f5f5f5 0%, #d6d6d6 25%, #a8a8a8 45%, #7a7a7a 65%, #4f4f4f 85%, #2f2f2f 100%)`,
+                  boxShadow: `inset 0 6px 12px rgba(0,0,0,0.7), inset 0 -2px 4px rgba(255,255,255,0.25), 0 2px 6px rgba(0,0,0,0.4)`,
+                  border: '1px solid rgba(255,255,255,0.25)',
+
                 }} />
               ))}
             </div>
@@ -614,11 +637,11 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
             {/* Rack Middle with Tubes */}
             <div style={{
               position: 'absolute',
-              top: 16,
+              top: 18,
               left: 15,
               right: 15,
               bottom: 15,
-              background: 'linear-gradient(180deg, #c4a882 0%, #a8896a 100%)',
+              background: 'transparent',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'flex-start',
@@ -644,11 +667,12 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
                   {/* Test tube */}
                   <div style={{
                     width: '20px',
-                    height: '65px',
+                    height: '115px',
+                    marginTop: '15px',
                     background: v === 'ghost'
                       ? 'rgba(200,200,200,0.3)'
                       : 'linear-gradient(90deg, rgba(200,220,230,0.6), rgba(255,255,255,0.9), rgba(200,220,230,0.6))',
-                    borderRadius: '3px 3px 50% 50%',
+                    borderRadius: '4px 4px 10px 10px',
                     border: v === 'ghost' ? '1px dashed #aaa' : '1.5px solid rgba(100,150,180,0.4)',
                     boxShadow: v !== 'ghost' ? 'inset 0 0 8px rgba(255,255,255,0.5)' : 'none',
                     position: 'relative',
@@ -681,7 +705,9 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
               left: 8,
               right: 8,
               height: 15,
-              background: 'linear-gradient(180deg, #a8896a 0%, #8b6d4d 100%)',
+              background: `linear-gradient(160deg, #0b1e3a 0%,#132a52 20%, #1c3f75 35%, #2a5aa3 45%, #1c3f75 55%, #132a52 70%, #0b1e3a 100%)`,
+              boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
+              border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: '0 0 3px 3px',
             }} />
           </div>
@@ -753,21 +779,45 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
           <div
             draggable={!!selectedSolution && placedTubes.length > 0}
             onDragStart={e => {
-              if (selectedSolution && placedTubes.length > 0) {
-                setPouring(true);
-                handleDragStart(e, { type: 'flask' });
-              }
-            }}
-            onDragEnd={handleDragEnd}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              cursor: selectedSolution && placedTubes.length > 0 ? 'grab' : 'not-allowed',
-              opacity: selectedSolution && placedTubes.length > 0 ? 1 : 0.5,
-              transition: 'all 0.3s',
-              transform: pouring ? 'rotate(-15deg)' : 'rotate(0deg)',
-            }}
+  if (selectedSolution && placedTubes.length > 0) {
+    handleDragStart(e, { type: 'flask' });
+
+    // create floating flask clone
+    const rect = e.currentTarget.getBoundingClientRect();
+    setFlaskDragPosition({
+      x: rect.left,
+      y: rect.top
+    });
+  }
+}}
+
+onDrag={(e) => {
+  if (flaskDragPosition) {
+    setFlaskDragPosition({
+      x: e.clientX - 35,
+      y: e.clientY - 35
+    });
+  }
+}}
+
+onDragEnd={() => {
+  handleDragEnd();
+  setFlaskDragPosition(null);
+}}
+
+style={{
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  cursor: selectedSolution && placedTubes.length > 0 ? 'grab' : 'not-allowed',
+  opacity: selectedSolution && placedTubes.length > 0 ? 1 : 0.5,
+  transition: 'transform 0.4s ease',
+  transform: pouring
+    ? 'translateX(40px) translateY(20px) rotate(-35deg)'
+    : 'translateX(0px) translateY(0px) rotate(0deg)',
+  transformOrigin: 'top center',
+}}
+
           >
             {/* Flask neck */}
             <div style={{
@@ -807,6 +857,53 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
             {placedTubes.length > 0 ? 'Drag to pour into tube' : 'Place tube first'}
           </span>
         </div>
+{/* Pour stream */}
+{pouring && (
+  <div style={{
+    position: 'absolute',
+    bottom: '-40px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '8px',
+    height: '50px',
+    background: SOLUTION_DATA[selectedSolution]?.color || '#e0f2fe',
+    borderRadius: '4px',
+    opacity: 0.8,
+    animation: 'pourFlow 0.4s infinite alternate',
+  }} />
+)}
+
+    {/* Flask neck */}
+    <div style={{
+      width: '16px',
+      height: '25px',
+      background: 'linear-gradient(90deg, rgba(200,220,230,0.8), rgba(255,255,255,0.9), rgba(200,220,230,0.8))',
+      borderRadius: '3px 3px 0 0',
+      border: '2px solid rgba(100,150,180,0.4)',
+      borderBottom: 'none',
+      margin: '0 auto'
+    }} />
+    {/* Flask body */}
+    <div style={{
+      width: '70px',
+      height: '70px',
+      background: 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(200,220,230,0.6) 100%)',
+      borderRadius: '50%',
+      border: '2px solid rgba(100,150,180,0.4)',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '60%',
+        background: SOLUTION_DATA[selectedSolution]?.color || '#e0f2fe',
+        borderRadius: '0 0 50% 50%',
+      }} />
+    </div>
+  
 
         <WoodenShelf />
 
@@ -923,7 +1020,7 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
   /* WORKING TABLE - Main laboratory bench */
   const renderWorkingTable = () => {
     const TABLE_W = 900;
-    const TABLE_H = 24;
+    const TABLE_H = 32;
     const RACK_WIDTH = 320;
     const RACK_HEIGHT = 240;
 
@@ -1015,9 +1112,11 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
             left: 0,
             right: 0,
             height: TABLE_H,
-            background: 'linear-gradient(180deg, #c4a882 0%, #a8896a 50%, #9a7d5e 100%)',
+            background: `linear-gradient(160deg, #0b1e3a 0%,#132a52 20%, #1c3f75 35%, #2a5aa3 45%, #1c3f75 55%, #132a52 70%, #0b1e3a 100%)`,
+            boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
+            border: '1px solid rgba(255,255,255,0.2)',
             borderRadius: '0 0 6px 6px',
-            boxShadow: 'inset 0 3px 8px rgba(0,0,0,0.15)',
+            
           }}>
             {[5, 12, 20, 30, 40, 50, 60, 70, 80, 88, 95].map((p) => (
               <div key={p} style={{
@@ -1031,6 +1130,27 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
             ))}
           </div>
 
+         {/* Table Legs */}
+{[0, 1].map((side) => (
+  <div
+    key={side}
+    style={{
+      position: 'absolute',
+      bottom: -180, // how long legs go down
+      left: side === 0 ? 40 : TABLE_W - 60,
+      width: 28,
+      height: 180,
+      background:
+        'linear-gradient(160deg, #0a1f3a 0%, #132a52 30%, #1c3f75 60%, #0a1f3a 100%)',
+      boxShadow:
+        'inset 0 4px 10px rgba(255,255,255,0.25), inset 0 -6px 14px rgba(0,0,0,0.6), 0 6px 14px rgba(0,0,0,0.4)',
+      borderRadius: '4px',
+    }}
+  />
+))}
+
+
+
           {/* Test Tube Rack on Bench */}
           <div style={{
             position: 'absolute',
@@ -1040,52 +1160,60 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
             width: RACK_WIDTH,
             height: RACK_HEIGHT,
           }}>
+            
             {/* Rack Left Support */}
             <div style={{
               position: 'absolute',
-              left: 0,
+              left: -45,
               bottom: 0,
               width: 22,
-              height: RACK_HEIGHT - 25,
-              background: 'linear-gradient(90deg, #a8896a 0%, #c4a882 50%, #a8896a 100%)',
+              height: RACK_HEIGHT + 70,
+              background: `linear-gradient(160deg, #0b1e3a 0%,#132a52 20%, #1c3f75 35%, #2a5aa3 45%, #1c3f75 55%, #132a52 70%, #0b1e3a 100%)`,
+              boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
+              border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: '4px 0 0 4px',
-              boxShadow: 'inset -2px 0 4px rgba(0,0,0,0.1)',
+              
             }} />
 
             {/* Rack Right Support */}
             <div style={{
               position: 'absolute',
-              right: 0,
+              right: -45,
               bottom: 0,
               width: 22,
-              height: RACK_HEIGHT - 25,
-              background: 'linear-gradient(90deg, #a8896a 0%, #c4a882 50%, #a8896a 100%)',
+              height: RACK_HEIGHT + 70,
+              background: `linear-gradient(160deg, #0b1e3a 0%,#132a52 20%, #1c3f75 35%, #2a5aa3 45%, #1c3f75 55%, #132a52 70%, #0b1e3a 100%)`,
+              boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
+              border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: '0 4px 4px 0',
-              boxShadow: 'inset 2px 0 4px rgba(0,0,0,0.1)',
+              
             }} />
 
             {/* Rack Top Bar with Holes */}
             <div style={{
               position: 'absolute',
               top: 0,
-              left: 12,
-              right: 12,
+              left: -32,
+              right: -32,
               height: 22,
-              background: 'linear-gradient(180deg, #d4b896 0%, #c4a882 100%)',
+              background: `linear-gradient(160deg, #0b1e3a 0%,#132a52 20%, #1c3f75 35%, #2a5aa3 45%, #1c3f75 55%, #132a52 70%, #0b1e3a 100%)`,
+              boxShadow: `inset 0 3px 8px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(0,0,0,0.65), 0 8px 18px rgba(0,0,0,0.4)`,
+              border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: '4px 4px 0 0',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              gap: '42px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+              gap: '42px'
             }}>
               {[0, 1, 2, 3].map(i => (
                 <div key={i} style={{
                   width: '38px',
                   height: '14px',
-                  background: '#5c4033',
                   borderRadius: '50%',
-                  boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.5)',
+                  background: `radial-gradient(circle at 30% 30%,#f5f5f5 0%, #d6d6d6 25%, #a8a8a8 45%, #7a7a7a 65%, #4f4f4f 85%, #2f2f2f 100%)`,
+                  boxShadow: `inset 0 6px 12px rgba(0,0,0,0.7), inset 0 -2px 4px rgba(255,255,255,0.25), 0 2px 6px rgba(0,0,0,0.4)`,
+                  border: '1px solid rgba(255,255,255,0.25)',
+
                 }} />
               ))}
             </div>
@@ -1097,7 +1225,7 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
               left: 22,
               right: 22,
               bottom: 22,
-              background: 'linear-gradient(180deg, #c4a882 0%, #a8896a 100%)',
+              background: 'transparent',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'flex-start',
@@ -1114,8 +1242,9 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
                     key={slotIndex}
                     style={{
                       width: '42px',
-                      height: '175px',
+                      height: '300px',
                       position: 'relative',
+                      marginTop:'-80px',
                     }}
                     onDragOver={(e) => {
                       e.preventDefault();
@@ -1143,7 +1272,7 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
                         {/* Tube Label */}
                         <div style={{
                           position: 'absolute',
-                          top: '-24px',
+                          top: '-70px',
                           left: '50%',
                           transform: 'translateX(-50%)',
                           fontSize: '0.7rem',
@@ -1183,9 +1312,13 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
                         {/* Test Tube Glass */}
                         <div style={{
                           width: '100%',
-                          height: '100%',
+                          height: '89%',
+                          
                           background: 'linear-gradient(90deg, rgba(200,220,230,0.4), rgba(255,255,255,0.85), rgba(200,220,230,0.4))',
-                          borderRadius: '6px 6px 50% 50%',
+                          
+                          borderRadius: '4px 4px 10px 10px',
+
+
                           border: '2px solid rgba(100,150,180,0.5)',
                           position: 'relative',
                           overflow: 'hidden',
@@ -1212,7 +1345,8 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
                               right: 0,
                               height: `${tube.fill}%`,
                               background: tube.solution?.color || '#e0f2fe',
-                              borderRadius: '0 0 50% 50%',
+                              borderRadius: '4px 4px 10px 10px',
+
                               transition: 'height 0.3s ease',
                             }}>
                               {/* Water shimmer */}
@@ -1344,18 +1478,40 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
               })}
             </div>
 
-            {/* Rack Bottom Base */}
-            <div style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 12,
-              right: 12,
-              height: 22,
-              background: 'linear-gradient(180deg, #a8896a 0%, #8b6d4d 100%)',
-              borderRadius: '0 0 4px 4px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-            }} />
-          </div>
+              {/* Rack Bottom Base */}
+<div
+  style={{
+    position: 'absolute',
+    bottom: 0,
+    left: -32,
+    right: -32,
+    height: 22, // slightly taller to fit holes nicely
+    background:
+      'linear-gradient(145deg, #0a1f3a 0%, #1a2b4e 20%, #0f2340 40%, #17305a 60%, #0a1f3a 80%, #1b2c4f 100%)',
+    boxShadow:
+      'inset 0 4px 12px rgba(255,255,255,0.3), inset 0 -4px 12px rgba(0,0,0,0.6), 0 4px 10px rgba(0,0,0,0.4)',
+    borderRadius: '0 0 6px 6px',
+    display: 'flex',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    padding: '0 40px',
+  }}
+>
+  {[0, 1, 2, 3].map((_, i) => (
+    <div
+      key={i}
+      style={{
+        width: 38,
+        height: 14,
+        borderRadius: '50%',
+        background: `radial-gradient( circle at 30% 30%, #f5f5f5 0%, #d6d6d6 25%, #a8a8a8 45%, #7a7a7a 65%, #4f4f4f 85%, #2f2f2f 100%)`,
+        boxShadow: `inset 0 6px 12px rgba(0,0,0,0.8),inset 0 -2px 4px rgba(255,255,255,0.3),0 2px 6px rgba(0,0,0,0.4)`,
+        border: '1px solid rgba(255,255,255,0.25)',
+      }}
+    />
+  ))}
+</div>
+</div>
 
           {/* Pouring animation */}
           {pouring && pouringTubeIndex !== null && (
@@ -1379,6 +1535,8 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
             </div>
           )}
         </div>
+
+
 
         {/* Observation & Results Panel */}
         {experimentStep >= 3 && hasAnyTubeWithLitmus && (
@@ -1580,25 +1738,6 @@ export default function AcidBaseExperiment({ markComplete, navigationButtons }) 
 
       {/* Navigation buttons */}
       {navigationButtons}
-
-      {/* Animations */}
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 0.8; }
-          50% { opacity: 1; }
-        }
-        @keyframes stream {
-          0%, 100% { transform: scaleY(1); opacity: 0.8; }
-          50% { transform: scaleY(1.1); opacity: 1; }
-        }
-        @keyframes shimmer {
-          0%, 100% { opacity: 0.5; transform: scaleX(0.85); }
-          50% { opacity: 1; transform: scaleX(1); }
-        }
-        * {
-          box-sizing: border-box;
-        }
-      `}</style>
     </div>
   );
 }
